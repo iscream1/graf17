@@ -504,7 +504,6 @@ public:
     void AddControlPoint(float cX, float cY)
     {
         float cZ=((float)(rand()%1000))/1000;
-        //cout<<cZ<<" ";
         vec4 cp = vec4(cX, cY, cZ, 1) * camera.Pinv() * camera.Vinv();
 
         ls.clear();
@@ -533,7 +532,9 @@ public:
                 for(float t=t1;t<=t2;t+=(t2-t1)/20)
                 {
                     vec4 pos=r(t);
+                    cout<<pos.v[2]<<endl;
                     (pos=pos*camera.V() * camera.P());
+
                     //ls.AddPoint(pos.v[0], pos.v[1]);
                 }
             }
@@ -545,7 +546,7 @@ public:
 class BezierCurves
 {
 public:
-    BezierCurve bcs[20];
+    BezierCurve bcs[21];
 
     BezierCurves(){};
 
@@ -561,6 +562,15 @@ public:
     BezierCurve operator[](const int& idx)
     {
         return bcs[idx];
+    }
+
+    void Draw()
+    {
+
+        for(int i=0;i<21;i++)
+        {
+            bcs[i].Draw();
+        }
     }
 };
 
@@ -630,6 +640,7 @@ void onDisplay() {
 
 	triangle.Draw();
 	lineStrip.Draw();
+	bezierCurves.Draw();
 
 	glutSwapBuffers();									// exchange the two buffers
 }
