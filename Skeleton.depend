@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1490188885 source:d:\dropbox\bme\6\graf\graf17\skeleton.cpp
+1490190777 source:d:\dropbox\bme\6\graf\graf17\skeleton.cpp
 	<stdio.h>
 	<stdlib.h>
 	<math.h>
@@ -10,6 +10,7 @@
 	<windows.h>
 	<GL/glew.h>
 	<GL/freeglut.h>
+	<iostream>
 
 1439207242 d:\dropbox\bme\6\graf\graf17\include\gl\glew.h
 	<stddef.h>

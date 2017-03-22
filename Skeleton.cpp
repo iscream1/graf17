@@ -51,6 +51,10 @@
 #include <GL/freeglut.h>	// must be downloaded unless you have an Apple
 #endif
 
+#include <iostream>
+using std::cout;
+using std::endl;
+
 using std::vector;
 
 const unsigned int windowWidth = 600, windowHeight = 600;
@@ -431,30 +435,38 @@ public:
 		ls.Create();
 	}
 
-    void AddPoint(vec4 cp, float time)
+    void AddPoint(float cX, float cY)
     {
+        vec4 cp = vec4(cX, cY, 0, 1) * camera.Pinv() * camera.Vinv();
+
         ls.clear();
-        float ti = cps.size(); 	// or something better
+        float ti = cps.size();
+
         cps.push_back(cp);
         ts.push_back(ti);
 
-        for(unsigned int i=0;i<cps.size();i++)
+        if(cps.size()>1)
         {
-            float t1=ts[i];
-            float t2=ts[i+1];
-            for(float t=t1;t<=t2;t+=(t2-t1)/20)
+            for(unsigned int i=0;i<cps.size();i++)
             {
-                vec4 pos=r(t);
-                pos=pos*camera.V() * camera.P();
-                ls.AddPoint(pos.v[0], pos.v[1]);
+                float t1=ts[i];
+                float t2=ts[i+1];
+                for(float t=t1;t<=t2;t+=(t2-t1)/20)
+                {
+                    vec4 pos=r(t);
+                    (pos=pos*camera.V() * camera.P());
+                    ls.AddPoint(pos.v[0], pos.v[1]);
+                }
             }
         }
+
     }
 
     vec4 r(float t)
     {
         vec4 rr(0, 0, 0);
         for(int i = 0; i < cps.size(); i++) rr = rr+ cps[i] * L(i,t);
+        cout<<rr.v[0]<<" "<<rr.v[1]<<endl;
         return rr;
     }
 
