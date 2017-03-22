@@ -301,7 +301,7 @@ public:
 
 		// vertex coordinates: vbo[0] -> Attrib Array 0 -> vertexPosition of the vertex shader
 		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); // make it active, it is an array
-		static float vertexCoords[] = { -8, -8, -6, 10, 8, -2 };	// vertex data on the CPU
+		float vertexCoords[] = { -8, -8, -6, 10, 8, -2 };	// vertex data on the CPU
 		glBufferData(GL_ARRAY_BUFFER,      // copy to the GPU
 			         sizeof(vertexCoords), // number of the vbo in bytes
 					 vertexCoords,		   // address of the data array on the CPU
@@ -316,7 +316,7 @@ public:
 
 		// vertex colors: vbo[1] -> Attrib Array 1 -> vertexColor of the vertex shader
 		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]); // make it active, it is an array
-		static float vertexColors[] = { 1, 0, 0,  0, 1, 0,  0, 0, 1 };	// vertex data on the CPU
+		float vertexColors[] = { 1, 0, 0,  0, 1, 0,  0, 0, 1 };	// vertex data on the CPU
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertexColors), vertexColors, GL_STATIC_DRAW);	// copy to the GPU
 
 		// Map Attribute Array 1 to the current bound vertex buffer (vbo[1])
@@ -357,7 +357,7 @@ public:
 
 class LineStrip {
 	GLuint vao, vbo;        // vertex array object, vertex buffer object
-	float  vertexData[10000]; // interleaved data of coordinates and colors
+	float  vertexData[100000]; // interleaved data of coordinates and colors
 	int    nVertices;       // number of vertices
 public:
 	LineStrip() {
@@ -420,10 +420,10 @@ class LagrangeCurve
     LineStrip ls;
 
 
-    float L(int i, float t)
+    float L(unsigned int i, float t)
     {
         float Li = 1.0f;
-        for(int j = 0; j < cps.size(); j++)
+        for(unsigned int j = 0; j < cps.size(); j++)
             if (j != i) Li *= (t - ts[j])/(ts[i]- ts[j]);
         return Li;
     }
@@ -465,8 +465,7 @@ public:
     vec4 r(float t)
     {
         vec4 rr(0, 0, 0);
-        for(int i = 0; i < cps.size(); i++) rr = rr+ cps[i] * L(i,t);
-        cout<<rr.v[0]<<" "<<rr.v[1]<<endl;
+        for(unsigned int i = 0; i < cps.size(); i++) rr = rr+ cps[i] * L(i,t);
         return rr;
     }
 
@@ -477,9 +476,98 @@ public:
 	}
 };
 
+class BezierCurve
+{
+    LineStrip ls;
+
+    float B(int i, float t) {
+        int n = cps.size()-1; // n deg polynomial = n+1 pts!
+        float choose = 1;
+      	for(int j = 1; j <= i; j++) choose *= (float)(n-j+1)/j;
+      	return choose * pow(t, i) * pow(1-t, n-i);
+   }
+
+public:
+    vector<vec4>  cps;	// control points
+    vector<float> ts;
+
+    BezierCurve() {
+	}
+
+	void Create(int x) {
+	    //ls.Create();
+		for(int i=0;i<21;i++){
+            AddControlPoint(x, -1.0f+((float)i/10));
+		}
+	}
+
+    void AddControlPoint(float cX, float cY)
+    {
+        float cZ=((float)(rand()%1000))/1000;
+        //cout<<cZ<<" ";
+        vec4 cp = vec4(cX, cY, cZ, 1) * camera.Pinv() * camera.Vinv();
+
+        ls.clear();
+        float ti = cps.size();
+
+        cps.push_back(cp);
+        ts.push_back(ti);
+
+    }
+
+    vec4 r(float t)
+    {
+        vec4 rr(0, 0);
+        for(unsigned int i = 0; i < cps.size(); i++) rr = rr+ cps[i] * B(i,t);
+        return rr;
+    }
+
+	void Draw()
+	{
+	    if(cps.size()>1)
+        {
+            for(unsigned int i=0;i<cps.size();i++)
+            {
+                float t1=ts[i];
+                float t2=ts[i+1];
+                for(float t=t1;t<=t2;t+=(t2-t1)/20)
+                {
+                    vec4 pos=r(t);
+                    (pos=pos*camera.V() * camera.P());
+                    //ls.AddPoint(pos.v[0], pos.v[1]);
+                }
+            }
+        }
+	    ls.Draw();
+	}
+};
+
+class BezierCurves
+{
+public:
+    BezierCurve bcs[20];
+
+    BezierCurves(){};
+
+    void Create()
+    {
+        srand(10);
+        for(int i=0;i<21;i++)
+        {
+            bcs[i].Create(-1.0f+((float)i/10));
+        }
+    }
+
+    BezierCurve operator[](const int& idx)
+    {
+        return bcs[idx];
+    }
+};
+
 // The virtual world: collection of two objects
 Triangle triangle;
 LagrangeCurve lineStrip;
+BezierCurves bezierCurves;
 
 // Initialization, create an OpenGL context
 void onInitialization() {
@@ -488,6 +576,8 @@ void onInitialization() {
 	// Create objects by setting up their vertex data on the GPU
 	lineStrip.Create();
 	triangle.Create();
+	bezierCurves.Create();
+
 
 	// Create vertex shader from string
 	unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -540,6 +630,7 @@ void onDisplay() {
 
 	triangle.Draw();
 	lineStrip.Draw();
+
 	glutSwapBuffers();									// exchange the two buffers
 }
 
