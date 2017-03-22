@@ -375,7 +375,6 @@ public:
 	}
 
 	void AddPoint(float cX, float cY) {
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		if (nVertices >= 20000) return;
 
 		vec4 wVertex = vec4(cX, cY, 0, 1) * camera.Pinv() * camera.Vinv();
@@ -402,6 +401,135 @@ public:
 			glBindVertexArray(vao);
 			glDrawArrays(GL_LINE_STRIP, 0, nVertices);
 		}
+	}
+};
+
+class LagrangeCurve
+{
+    GLuint vao, vbo;        // vertex array object, vertex buffer object
+	vector<vec4> controlpoints;
+	vector<float> timestamps;
+	LineStrip ls;
+
+	vec4 Hermite(int i, float t)
+	{
+	    vec4 a0, a1, a2, a3;
+
+        float ti=(getTime(i+1)-getTime(i));
+        a0=getPos(i);
+        a1=getV(i);
+        a2=((getPos(i+1)-getPos(i))*3.0f
+        /ti
+        /ti)
+        -
+        ((getV(i+1)+getV(i)*2.0f)
+        /ti);
+
+        a3=((getPos(i)-getPos(i+1))*2.0f
+        /ti
+        /ti
+        /ti)
+        +
+        ((getV(i+1)+getV(i))
+        /ti
+        /ti);
+        float timeElapsed=t-getTime(i);
+        return (a3*timeElapsed*timeElapsed*timeElapsed +a2*timeElapsed*timeElapsed +a1*timeElapsed +a0);
+	}
+
+public:
+    CSpline() {
+	}
+
+	void Create() {
+		ls.Create();
+	}
+
+	void AddPoint(vec4 cp, float time) {
+	    if(controlpoints.size()==0)
+        {
+            controlpoints.push_back(cp);
+            controlpoints.push_back(cp);
+            timestamps.push_back(time/1000.0f);
+            timestamps.push_back(time/1000.0f+0.5f);
+        }
+        else
+        {
+            controlpoints.pop_back();
+            timestamps.pop_back();
+
+            controlpoints.push_back(cp);
+            timestamps.push_back(time/1000.0f);
+            controlpoints.push_back(controlpoints[0]);
+            timestamps.push_back((time/1000.0f)+0.5f);
+        }
+
+		for(unsigned int i=0;i<controlpoints.size();i++)
+        {
+            float t1=getTime(i);
+            float t2=getTime(i+1);
+            for(float t=t1;t<=t2;t+=(t2-t1)/20)
+            {
+                vec4 pos=Hermite(i, t);
+                pos=pos*camera.V() * camera.P();
+                ls.AddPoint(pos.v[0], pos.v[1]);
+            }
+        }
+	}
+
+
+
+	float getTime(int i)
+	{
+            if(i<0) return timestamps[i+controlpoints.size()];
+            return timestamps[i%(controlpoints.size())];
+	}
+
+	vec4 getPos(int i)
+	{
+	    if(i<0) return controlpoints[i+controlpoints.size()];
+        return controlpoints[i%(controlpoints.size())];
+	}
+
+	vec4 getV(int i)
+	{
+	    float tenzios=((1.0f-(-0.8f))/2.0f);
+        if(i==(int)controlpoints.size()-1) i=0;
+        vec4 ret=(((getPos(i+1)-getPos(i))
+                    /
+                    (getTime(i+1)-getTime(i)))
+                    +
+                    ((getPos(i)-getPos(i-1))
+                    /
+                    (getTime(i)-getTime(i-1)))
+                    *tenzios);
+
+	    return ret;
+	}
+
+	vec4 getR(float t)
+	{
+        unsigned int i=0;
+        while((timestamps[i]<=(t))&&i<controlpoints.size())
+        {
+            i++;
+        }
+        return Hermite(i-1, t);
+	}
+
+	void Animate(float t)
+	{
+	    if(timestamps.size()!=0)
+        {
+            float tsearch=fmod(t, timestamps[timestamps.size()-1]-timestamps[0])+timestamps[0];
+            vec4 psearch=getR(tsearch);
+            if(camera.getVstate()) camera.setV(psearch.v[0], psearch.v[1]);
+        }
+	}
+
+	void Draw()
+	{
+	    ls.Draw();
 	}
 };
 
