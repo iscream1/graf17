@@ -325,6 +325,39 @@ public:
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL); // Attribute Array 1, components/attribute, component type, normalize?, tightly packed
 	}
 
+	void Create(vec4 a, vec4 b, vec4 c, vec4 colorA, vec4 colorB, vec4 colorC){
+		glGenVertexArrays(1, &vao);	// create 1 vertex array object
+		glBindVertexArray(vao);		// make it active
+
+		unsigned int vbo[2];		// vertex buffer objects
+		glGenBuffers(2, &vbo[0]);	// Generate 2 vertex buffer objects
+
+		// vertex coordinates: vbo[0] -> Attrib Array 0 -> vertexPosition of the vertex shader
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); // make it active, it is an array
+		float vertexCoords[] = { a.v[0], a.v[1], b.v[0], b.v[1], c.v[0], c.v[1]};	// vertex data on the CPU
+		glBufferData(GL_ARRAY_BUFFER,      // copy to the GPU
+			         sizeof(vertexCoords), // number of the vbo in bytes
+					 vertexCoords,		   // address of the data array on the CPU
+					 GL_STATIC_DRAW);	   // copy to that part of the memory which is not modified
+		// Map Attribute Array 0 to the current bound vertex buffer (vbo[0])
+		glEnableVertexAttribArray(0);
+		// Data organization of Attribute Array 0
+		glVertexAttribPointer(0,			// Attribute Array 0
+			                  2, GL_FLOAT,  // components/attribute, component type
+							  GL_FALSE,		// not in fixed point format, do not normalized
+							  0, NULL);     // stride and offset: it is tightly packed
+
+		// vertex colors: vbo[1] -> Attrib Array 1 -> vertexColor of the vertex shader
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]); // make it active, it is an array
+		float vertexColors[] = { colorA.v[0], colorA.v[1], colorA.v[2],  colorB.v[0], colorB.v[1], colorB.v[2],  colorC.v[0], colorC.v[1], colorC.v[2] };	// vertex data on the CPU
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertexColors), vertexColors, GL_STATIC_DRAW);	// copy to the GPU
+
+		// Map Attribute Array 1 to the current bound vertex buffer (vbo[1])
+		glEnableVertexAttribArray(1);  // Vertex position
+		// Data organization of Attribute Array 1
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL); // Attribute Array 1, components/attribute, component type, normalize?, tightly packed
+	}
+
 	void Animate(float t) {
 		sx = 1; // sinf(t);
 		sy = 1; // cosf(t);
@@ -621,7 +654,6 @@ public:
                 for(float t=t1;t<=t2;t+=(t2-t1)/20)
                 {
                     vec4 pos=r(t);
-                    //cout<<pos.v[2]<<endl;
                     (pos=pos*camera.V() * camera.P());
 
                     ls.AddPoint(pos.v[0], pos.v[1]);
@@ -663,18 +695,25 @@ public:
     }
 };
 
+class Square{
+public:
+    Triangle t[2]; //triangles
+};
+
+
 class BezierSurface {
-	GLuint vao, vbo;        // vertex array object, vertex buffer object
+	/*GLuint vao, vbo;        // vertex array object, vertex buffer object
 	float  vertexData[100000]; // interleaved data of coordinates and colors
-	int    nVertices;       // number of vertices
+	int    nVertices;       // number of vertices*/
 	BezierCurves bezierCurves;
+	Square squares[20][20];
 public:
 	BezierSurface() {
-		nVertices = 0;
+		//nVertices = 0;
 	}
 	void Create() {
 	    bezierCurves.Create();
-		glGenVertexArrays(1, &vao);
+		/*glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
 
 		glGenBuffers(1, &vbo); // Generate 1 vertex buffer object
@@ -686,11 +725,11 @@ public:
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(0)); // attribute array, components/attribute, component type, normalize?, stride, offset
 		// Map attribute array 1 to the color data of the interleaved vbo
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
-
+        */
 		addSquares();
 	}
 
-	void AddPoint(float cX, float cY, vec4 color) {
+	/*void AddPoint(float cX, float cY, vec4 color) {
 		if (nVertices >= 20000) return;
 
 		vec4 wVertex = vec4(cX, cY, 0, 1) * camera.Pinv() * camera.Vinv();
@@ -704,7 +743,7 @@ public:
 		// copy data to the GPU
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		glBufferData(GL_ARRAY_BUFFER, nVertices * 5 * sizeof(float), vertexData, GL_DYNAMIC_DRAW);
-	}
+	}*/
 
 	void addSquares()
 	{
@@ -715,17 +754,29 @@ public:
                 float zb=bezierCurves[i+1]. r(j).   v[2]; //jobb lenn
                 float zc=bezierCurves[i+1]. r(j+1). v[2]; //jobb fenn
                 float zd=bezierCurves[i].   r(j+1). v[2]; //bal fenn
-                cout<<za<<" "<<zb<<" "<<zc<<" "<<zd;
-                AddPoint(-1.0f+((float)i/10),       -1.0f+((float)j/10),        vec4(float(144/255), za, 1));
+                //cout<<za<<" "<<zb<<" "<<zc<<" "<<zd;
+                /*AddPoint(-1.0f+((float)i/10),       -1.0f+((float)j/10),        vec4(float(144/255), za, 1));
                 AddPoint(-1.0f+((float)(i+1)/10),   -1.0f+((float)j/10),        vec4(float(144/255), zb, 1));
                 AddPoint(-1.0f+((float)(i+1)/10),   -1.0f+((float)(j+1)/10),    vec4(float(144/255), zc, 1));
-                AddPoint(-1.0f+((float)i/10),       -1.0f+((float)(j+1)/10),    vec4(float(144/255), zd, 1));
+                AddPoint(-1.0f+((float)i/10),       -1.0f+((float)(j+1)/10),    vec4(float(144/255), zd, 1));*/
+                vec4 a=vec4(-10+i, -10+j, 0);
+                vec4 b=vec4(-10+i+1, -10+j, 0);
+                vec4 c=vec4(-10+i+1, -10+j+1, 0);
+                vec4 d=vec4(-10+i, -10+j+1, 0);
+                //cout<<a.v[0]<<" "<<a.v[1]<<endl<<b.v[0]<<" "<<b.v[1]<<endl<<c.v[0]<<" "<<c.v[1]<<endl<<d.v[0]<<" "<<d.v[1]<<endl<<endl;
+
+                vec4 colorA=vec4(float(144/255), za/10, 1);
+                vec4 colorB=vec4(float(144/255), zb/10, 1);
+                vec4 colorC=vec4(float(144/255), zc/10, 1);
+                vec4 colorD=vec4(float(144/255), zd/10, 1);
+                squares[i][j].t[0].Create(a, b, c, colorA, colorB, colorC);
+                squares[i][j].t[1].Create(a, c, d, colorA, colorC, colorD);
             }
 	}
 
 	void Draw() {
 	    //bezierCurves.Draw();
-		if (nVertices > 0) {
+		/*if (nVertices > 0) {
 			mat4 VPTransform = camera.V() * camera.P();
 
 			int location = glGetUniformLocation(shaderProgram, "MVP");
@@ -734,12 +785,13 @@ public:
 
 			glBindVertexArray(vao);
 			glDrawArrays(GL_TRIANGLE_STRIP, 0, nVertices);
-		}
-	}
-
-	void clear()
-	{
-	    nVertices=0;
+		}*/
+		for(int i=0;i<20;i++)
+            for(int j=0;j<20;j++)
+            {
+                squares[i][j].t[0].Draw();
+                squares[i][j].t[1].Draw();
+            }
 	}
 };
 
@@ -808,8 +860,9 @@ void onDisplay() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the screen
 
 	triangle.Draw();
-	lineStrip.Draw();
 	bezierSurface.Draw();
+	lineStrip.Draw();
+
 
 	glutSwapBuffers();									// exchange the two buffers
 }
