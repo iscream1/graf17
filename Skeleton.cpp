@@ -621,7 +621,7 @@ public:
 	    if(ts.size()!=0)
         {
             float tsearch=fmod(t, timestamps[timestamps.size()-1]-timestamps[0])+timestamps[0];
-            vec4 psearch=r(tsearch);
+            vec4 psearch=r(tsearch)*10;
             arrow.Move(psearch);
             //if(camera.getVstate()) camera.setV(psearch.v[0], psearch.v[1]);
         }
@@ -796,44 +796,65 @@ public:
 
 	void addSquares()
 	{
-	    for(int i=0;i<20;i++)
+	    for(int i=0;i<20;i++) //20 oszlop
         {
-            for(int j=0;j<20;j++)
+            for(int j=0;j<20;j++) //egy oszlopban 20 negyzet
             {
-                /*float za=bezierCurves[i].   r((float)j).   v[2]; //bal lenn
-                float zb=bezierCurves[i+1]. r((float)j).   v[2]; //jobb lenn
-                float zc=bezierCurves[i+1]. r((float)(j+1)). v[2]; //jobb fenn
-                float zd=bezierCurves[i].   r((float)(j+1)). v[2]; //bal fenn*/
+                /*float xa=r((float)i     /21, (float)j       /21).v[0]; //bal lenn
+                float xb=r((float)(i+1) /21, (float)j       /21).v[0]; //jobb lenn
+                float xc=r((float)(i+1) /21, (float)(j+1)   /21).v[0]; //jobb fenn
+                float xd=r((float)i     /21, (float)(j+1)   /21).v[0]; //bal fenn
 
-                /*float za=bezierCurves[i].   getZ(j); //bal lenn
-                float zb=bezierCurves[i+1]. getZ(j); //jobb lenn
-                float zc=bezierCurves[i+1]. getZ(j+1); //jobb fenn
-                float zd=bezierCurves[i].   getZ(j+1); //bal fenn*/
+                float ya=r((float)i     /21, (float)j       /21).v[1]; //bal lenn
+                float yb=r((float)(i+1) /21, (float)j       /21).v[1]; //jobb lenn
+                float yc=r((float)(i+1) /21, (float)(j+1)   /21).v[1]; //jobb fenn
+                float yd=r((float)i     /21, (float)(j+1)   /21).v[1]; //bal fenn
 
-                float za=r((float)i/21, (float)j/21).v[2]; //bal lenn
-                float zb=r((float)(i+1)/21, (float)j/21).v[2]; //jobb lenn
-                float zc=r((float)(i+1)/21, (float)(j+1)/21).v[2]; //jobb fenn
-                float zd=r((float)i/21, (float)(j+1)/21).v[2]; //bal fenn
+                cout<<xa<<" "<<xb<<" "<<xc<<" "<<xd<<endl;
+                cout<<ya<<" "<<yb<<" "<<yc<<" "<<yd<<endl<<endl;*/
 
-                cout<<za<<" "<<zb<<" "<<zc<<" "<<zd<<endl;
-                /*AddPoint(-1.0f+((float)i/10),       -1.0f+((float)j/10),        vec4(float(144/255), za, 1));
-                AddPoint(-1.0f+((float)(i+1)/10),   -1.0f+((float)j/10),        vec4(float(144/255), zb, 1));
-                AddPoint(-1.0f+((float)(i+1)/10),   -1.0f+((float)(j+1)/10),    vec4(float(144/255), zc, 1));
-                AddPoint(-1.0f+((float)i/10),       -1.0f+((float)(j+1)/10),    vec4(float(144/255), zd, 1));*/
+                //magassagok
+                float za=r((float)i     /21, (float)j       /21).v[2]; //bal lenn
+                float zb=r((float)(i+1) /21, (float)j       /21).v[2]; //jobb lenn
+                float zc=r((float)(i+1) /21, (float)(j+1)   /21).v[2]; //jobb fenn
+                float zd=r((float)i     /21, (float)(j+1)   /21).v[2]; //bal fenn
+
+                //4db 2D vec4 -10;10 tartomanyban!!! , egy negyzet 4 sarka, sorrend ugyanaz mint feljebb
                 vec4 a=vec4(-10+i, -10+j, 0);
                 vec4 b=vec4(-10+i+1, -10+j, 0);
                 vec4 c=vec4(-10+i+1, -10+j+1, 0);
                 vec4 d=vec4(-10+i, -10+j+1, 0);
 
+                /*//csucsok szinei
                 vec4 colorA=vec4(float(144/255), za, 1);
                 vec4 colorB=vec4(float(144/255), zb, 1);
                 vec4 colorC=vec4(float(144/255), zc, 1);
-                vec4 colorD=vec4(float(144/255), zd, 1);
+                vec4 colorD=vec4(float(144/255), zd, 1);*/
+
+                vec4 colorA=makeColor(za);
+                vec4 colorB=makeColor(zb);
+                vec4 colorC=makeColor(zc);
+                vec4 colorD=makeColor(zd);
+
+                //elso haromszog a negyzetben
                 squares[i][j].t[0].Create(a, b, c, colorA, colorB, colorC);
+                //masodik haromszog a negyzetben
                 squares[i][j].t[1].Create(a, c, d, colorA, colorC, colorD);
             }
         }
-        cout<<endl;
+	}
+
+	vec4 makeColor(float z)
+	{
+	    if(z<0.45) return vec4(nRGB(83),nRGB(178), 0);
+	    //if(z<0.5) return vec4(nRGB(169),nRGB(148), 0);
+	    if(z<0.55) return vec4(nRGB(255), nRGB(119), 0);
+	    return vec4(nRGB(104), nRGB(48), 0);
+	}
+
+	float nRGB(int a)
+	{
+	    return (float)a/(float)255;
 	}
 
 	void Draw() {
@@ -854,7 +875,7 @@ BezierSurface bezierSurface;
 // Initialization, create an OpenGL context
 void onInitialization() {
 	glViewport(0, 0, windowWidth, windowHeight);
-	srand(100);
+	srand(10000);
 
 	// Create objects by setting up their vertex data on the GPU
 	lineStrip.Create();
