@@ -446,95 +446,6 @@ public:
 	}
 };
 
-/*class BezierSurface
-{
-protected:
-    unsigned int vao;	// vertex array object id
-    float colors[10000];
-    float vertices[10000];
-public:
-
-
-	Star() {
-	    Animate(0);
-	}
-
-	void Animate(float t) {
-	}
-
-	void Draw() {
-
-		mat4 MVPTransform =R * M * camera.V() * camera.P();
-
-		// set GPU uniform matrix variable MVP with the content of CPU variable MVPTransform
-		int location = glGetUniformLocation(shaderProgram, "MVP");
-		if (location >= 0) glUniformMatrix4fv(location, 1, GL_TRUE, MVPTransform); // set uniform variable MVP to the MVPTransform
-		else printf("uniform MVP cannot be set\n");
-
-		glBindVertexArray(vao);	// make the vao and its vbos active playing the role of the data source
-		glDrawArrays(GL_TRIANGLE_FAN, 0, 16);	// draw a single triangle with vertices defined in vao
-	}
-
-    void Create(float r, float g, float b)
-    {
-        vertices[0]=0;
-        vertices[1]=0;
-
-        for(int i=0;i<400;i++)
-        {
-            vertices[i*2+2]=cos(fi);
-            vertices[i*2+3]=sin(fi);
-            fi+=deltaFi;
-        }
-
-        for(int i=0;i<7*N;i+=3)
-        {
-            colors[i]=r;
-            colors[i+1]=g;
-            colors[i+2]=b;
-        }
-
-        colors[N*3+3]=r;
-        colors[N*3+4]=g;
-        colors[N*3+5]=b;
-
-        glGenVertexArrays(1, &vao);	// create 1 vertex array object
-		glBindVertexArray(vao);		// make it active
-
-		unsigned int vbo[2];		// vertex buffer objects
-		glGenBuffers(2, &vbo[0]);	// Generate 2 vertex buffer objects
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); // make it active, it is an array
-		glBufferData(GL_ARRAY_BUFFER,      // copy to the GPU
-			sizeof(vertices),  // number of the vbo in bytes
-			vertices,		   // address of the data array on the CPU
-			GL_STATIC_DRAW);	   // copy to that part of the memory which is not modified
-		// Map Attribute Array 0 to the current bound vertex buffer (vbo[0])
-		glEnableVertexAttribArray(0);
-		// Data organization of Attribute Array 0
-		glVertexAttribPointer(0,			// Attribute Array 0
-			2, GL_FLOAT,  // components/attribute, component type
-			GL_FALSE,		// not in fixed point format, do not normalized
-			0, NULL);     // stride and offset: it is tightly packed
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]); // make it active, it is an array
-		glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);	// copy to the GPU
-
-		// Map Attribute Array 1 to the current bound vertex buffer (vbo[1])
-		glEnableVertexAttribArray(1);  // Vertex position
-		// Data organization of Attribute Array 1
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL); // Attribute Array 1, components/attribute, component type, normalize?, tightly packed
-    }
-
-    void Move(vec4 to)
-    {
-        position=to;
-    }
-
-    vec4 getPos()
-    {
-        return position;
-    }
-};*/
-
 class Arrow
 {
 protected:
@@ -544,8 +455,6 @@ protected:
     vec4 position;
     float colors[15];
 public:
-
-
 	Arrow() {
 	    Animate(0);
 	}
@@ -579,7 +488,7 @@ public:
 
     void Create()
     {
-        float vertices[8];
+        float vertices[10];
         float fi=0;
         vertices[0]=-1;
         vertices[1]=-1;
@@ -679,7 +588,8 @@ public:
         float ti = cps.size();
 
         cps.push_back(cp);
-        ts.push_back(ti);
+        //ts.push_back(ti);
+        ts.push_back(time);
         timestamps.push_back(time);
 
         if(cps.size()>1)
@@ -849,9 +759,6 @@ public:
 
 
 class BezierSurface {
-	/*GLuint vao, vbo;        // vertex array object, vertex buffer object
-	float  vertexData[100000]; // interleaved data of coordinates and colors
-	int    nVertices;       // number of vertices*/
 	BezierCurves bezierCurves;
 	Square squares[20][20];
 public:
