@@ -589,8 +589,8 @@ public:
 
         cps.push_back(cp);
         //ts.push_back(ti);
-        ts.push_back(time);
-        timestamps.push_back(time);
+        ts.push_back(time/1000);
+        timestamps.push_back(time/1000);
 
         if(cps.size()>1)
         {
@@ -621,9 +621,9 @@ public:
 	    if(ts.size()!=0)
         {
             float tsearch=fmod(t, timestamps[timestamps.size()-1]-timestamps[0])+timestamps[0];
-            vec4 psearch=r(tsearch)*10;
+            vec4 psearch=r(tsearch);
             arrow.Move(psearch);
-            //if(camera.getVstate()) camera.setV(psearch.v[0], psearch.v[1]);
+            if(camera.getVstate()) camera.setV(psearch.v[0], psearch.v[1]);
         }
 	}
 
