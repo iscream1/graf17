@@ -825,10 +825,122 @@ public:
 	}
 };
 
+class Arrow
+{
+protected:
+    unsigned int vao;	// vertex array object id
+	float sx, sy;   // scaling
+	float fi;
+    vec4 position;
+    float colors[15];
+public:
+
+
+	Arrow() {
+	    Animate(0);
+	}
+
+	void Animate(float t) {
+		sx=sy=cosf(2.0f*t)/3.0f+0.75f;
+		fi=t;
+	}
+
+	void Draw() {
+		mat4 M(sx, 0, 0, 0,
+			0, sy, 0, 0,
+			0, 0, 1, 0,
+			position.v[0], position.v[1], 0, 1); // model matrix
+
+        mat4 R(cosf(fi), -sinf(fi), 0, 0,
+			sinf(fi), cosf(fi), 0, 0,
+			0, 0, 1, 0,
+			0, 0, 0, 1);
+
+		mat4 MVPTransform =R * M * camera.V() * camera.P();
+
+		// set GPU uniform matrix variable MVP with the content of CPU variable MVPTransform
+		int location = glGetUniformLocation(shaderProgram, "MVP");
+		if (location >= 0) glUniformMatrix4fv(location, 1, GL_TRUE, MVPTransform); // set uniform variable MVP to the MVPTransform
+		else printf("uniform MVP cannot be set\n");
+
+		glBindVertexArray(vao);	// make the vao and its vbos active playing the role of the data source
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 16);	// draw a single triangle with vertices defined in vao
+	}
+
+    void Create()
+    {
+        float vertices[8];
+        float fi=0;
+        vertices[0]=-1;
+        vertices[1]=-1;
+        vertices[2]=0;
+        vertices[3]=1;
+        vertices[4]=0;
+        vertices[5]=0;
+        vertices[6]=1;
+        vertices[7]=-1;
+        vertices[8]=0;
+        vertices[9]=0;
+
+        colors[0]=1;
+        colors[1]=0;
+        colors[2]=0;
+        colors[3]=0;
+        colors[4]=1;
+        colors[5]=0;
+        colors[6]=0;
+        colors[7]=0;
+        colors[8]=1;
+        colors[9]=1;
+        colors[10]=1;
+        colors[11]=0;
+        colors[12]=0;
+        colors[13]=0;
+        colors[14]=0;
+
+
+        glGenVertexArrays(1, &vao);	// create 1 vertex array object
+		glBindVertexArray(vao);		// make it active
+
+		unsigned int vbo[2];		// vertex buffer objects
+		glGenBuffers(2, &vbo[0]);	// Generate 2 vertex buffer objects
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); // make it active, it is an array
+		glBufferData(GL_ARRAY_BUFFER,      // copy to the GPU
+			sizeof(vertices),  // number of the vbo in bytes
+			vertices,		   // address of the data array on the CPU
+			GL_STATIC_DRAW);	   // copy to that part of the memory which is not modified
+		// Map Attribute Array 0 to the current bound vertex buffer (vbo[0])
+		glEnableVertexAttribArray(0);
+		// Data organization of Attribute Array 0
+		glVertexAttribPointer(0,			// Attribute Array 0
+			2, GL_FLOAT,  // components/attribute, component type
+			GL_FALSE,		// not in fixed point format, do not normalized
+			0, NULL);     // stride and offset: it is tightly packed
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]); // make it active, it is an array
+		glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);	// copy to the GPU
+
+		// Map Attribute Array 1 to the current bound vertex buffer (vbo[1])
+		glEnableVertexAttribArray(1);  // Vertex position
+		// Data organization of Attribute Array 1
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL); // Attribute Array 1, components/attribute, component type, normalize?, tightly packed
+    }
+
+    void Move(vec4 to)
+    {
+        position=to;
+    }
+
+    vec4 getPos()
+    {
+        return position;
+    }
+};
+
 // The virtual world: collection of two objects
 Triangle triangle;
 LagrangeCurve lineStrip;
 BezierSurface bezierSurface;
+Arrow arrow;
 
 // Initialization, create an OpenGL context
 void onInitialization() {
@@ -839,6 +951,7 @@ void onInitialization() {
 	lineStrip.Create();
 	triangle.Create();
 	bezierSurface.Create();
+	arrow.Create();
 
 
 	// Create vertex shader from string
@@ -893,6 +1006,7 @@ void onDisplay() {
 	triangle.Draw();
 	bezierSurface.Draw();
 	lineStrip.Draw();
+	arrow.Draw();
 
 
 	glutSwapBuffers();									// exchange the two buffers
