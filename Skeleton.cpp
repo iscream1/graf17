@@ -581,7 +581,6 @@ public:
                 }
             }
         }
-
     }
 
     vec4 r(float t)
@@ -629,7 +628,7 @@ public:
         vec4 cp = vec4(cX, cY, cZ, 1) * camera.Pinv() * camera.Vinv();
 
         ls.clear();
-        float ti = cps.size();
+        float ti = (float)cps.size()/20.0f;
 
         cps.push_back(cp);
         ts.push_back(ti);
@@ -662,6 +661,27 @@ public:
         }
 	    ls.Draw();
 	}
+
+	float getZ(int x)
+	{
+	    float z;
+	    if(cps.size()>1)
+        {
+            for(unsigned int i=0;i<x+1;i++)
+            {
+                float t1=ts[i];
+                float t2=ts[i+1];
+                for(float t=t1;t<=t2;t+=(t2-t1)/20)
+                {
+                    vec4 pos=r(t);
+                    //(pos=pos*camera.V() * camera.P());
+
+                    z=pos.v[2];
+                }
+            }
+        }
+        return z;
+	}
 };
 
 class BezierCurves
@@ -673,7 +693,7 @@ public:
 
     void Create()
     {
-        srand(10);
+
         for(int i=0;i<21;i++)
         {
             bcs[i].Create(-1.0f+((float)i/10));
@@ -748,13 +768,20 @@ public:
 	void addSquares()
 	{
 	    for(int i=0;i<20;i++)
+        {
             for(int j=0;j<20;j++)
             {
-                float za=bezierCurves[i].   r(j).   v[2]; //bal lenn
-                float zb=bezierCurves[i+1]. r(j).   v[2]; //jobb lenn
-                float zc=bezierCurves[i+1]. r(j+1). v[2]; //jobb fenn
-                float zd=bezierCurves[i].   r(j+1). v[2]; //bal fenn
-                //cout<<za<<" "<<zb<<" "<<zc<<" "<<zd;
+                /*float za=bezierCurves[i].   r((float)j).   v[2]; //bal lenn
+                float zb=bezierCurves[i+1]. r((float)j).   v[2]; //jobb lenn
+                float zc=bezierCurves[i+1]. r((float)(j+1)). v[2]; //jobb fenn
+                float zd=bezierCurves[i].   r((float)(j+1)). v[2]; //bal fenn*/
+
+                float za=bezierCurves[i].   getZ(j); //bal lenn
+                float zb=bezierCurves[i+1]. getZ(j); //jobb lenn
+                float zc=bezierCurves[i+1]. getZ(j+1); //jobb fenn
+                float zd=bezierCurves[i].   getZ(j+1); //bal fenn
+
+                cout<<za<<" "<<zb<<" "<<zc<<" "<<zd<<endl;
                 /*AddPoint(-1.0f+((float)i/10),       -1.0f+((float)j/10),        vec4(float(144/255), za, 1));
                 AddPoint(-1.0f+((float)(i+1)/10),   -1.0f+((float)j/10),        vec4(float(144/255), zb, 1));
                 AddPoint(-1.0f+((float)(i+1)/10),   -1.0f+((float)(j+1)/10),    vec4(float(144/255), zc, 1));
@@ -765,13 +792,16 @@ public:
                 vec4 d=vec4(-10+i, -10+j+1, 0);
                 //cout<<a.v[0]<<" "<<a.v[1]<<endl<<b.v[0]<<" "<<b.v[1]<<endl<<c.v[0]<<" "<<c.v[1]<<endl<<d.v[0]<<" "<<d.v[1]<<endl<<endl;
 
-                vec4 colorA=vec4(float(144/255), za/10, 1);
-                vec4 colorB=vec4(float(144/255), zb/10, 1);
-                vec4 colorC=vec4(float(144/255), zc/10, 1);
-                vec4 colorD=vec4(float(144/255), zd/10, 1);
+                vec4 colorA=vec4(float(144/255), za, 1);
+                vec4 colorB=vec4(float(144/255), zb, 1);
+                vec4 colorC=vec4(float(144/255), zc, 1);
+                vec4 colorD=vec4(float(144/255), zd, 1);
                 squares[i][j].t[0].Create(a, b, c, colorA, colorB, colorC);
                 squares[i][j].t[1].Create(a, c, d, colorA, colorC, colorD);
             }
+            cout<<endl;
+        }
+
 	}
 
 	void Draw() {
@@ -803,6 +833,7 @@ BezierSurface bezierSurface;
 // Initialization, create an OpenGL context
 void onInitialization() {
 	glViewport(0, 0, windowWidth, windowHeight);
+	srand(10000);
 
 	// Create objects by setting up their vertex data on the GPU
 	lineStrip.Create();
