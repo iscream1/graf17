@@ -489,7 +489,6 @@ public:
     void Create()
     {
         float vertices[10];
-        float fi=0;
         vertices[0]=-1;
         vertices[1]=-1;
         vertices[2]=0;
@@ -555,106 +554,9 @@ public:
     }
 };
 
-class LagrangeCurve
-{
-    vector<vec4>  cps;	// control points
-    vector<float> ts; 	// parameter (knot) values
-    vector<float> timestamps;
-    LineStrip ls;
-    Arrow arrow;
 
 
-    float L(unsigned int i, float t)
-    {
-        float Li = 1.0f;
-        for(unsigned int j = 0; j < cps.size(); j++)
-            if (j != i) Li *= (t - ts[j])/(ts[i]- ts[j]);
-        return Li;
-    }
-
-    float Ld(unsigned int i, float t)
-    {
-        float Li = 1.0f;
-        for(unsigned int j = 0; j < cps.size(); j++)
-            if (j != i) Li += 1/(t - ts[j]);
-        return L(i, t)* Li;
-    }
-
-public:
-    LagrangeCurve() {
-	}
-
-	void Create() {
-		ls.Create();
-		arrow.Create();
-	}
-
-    void AddPoint(float cX, float cY, float time)
-    {
-        vec4 cp = vec4(cX, cY, 0, 1) * camera.Pinv() * camera.Vinv();
-
-        ls.clear();
-        float ti = cps.size();
-
-        cps.push_back(cp);
-        //ts.push_back(ti);
-        ts.push_back(time/1000);
-        timestamps.push_back(time/1000);
-
-        if(cps.size()>1)
-        {
-            for(unsigned int i=0;i<cps.size();i++)
-            {
-                float t1=ts[i];
-                float t2=ts[i+1];
-                for(float t=t1;t<=t2;t+=(t2-t1)/20)
-                {
-                    vec4 pos=r(t);
-                    (pos=pos*camera.V() * camera.P());
-                    ls.AddPoint(pos.v[0], pos.v[1]);
-                }
-            }
-        }
-    }
-
-    vec4 r(float t)
-    {
-        vec4 rr(0, 0, 0);
-        for(unsigned int i = 0; i < cps.size(); i++) rr = rr+ cps[i] * L(i,t);
-        return rr;
-    }
-
-    vec4 rd(float t)
-    {
-        vec4 rr(0, 0, 0);
-        for(unsigned int i = 0; i < cps.size(); i++) rr = rr+ cps[i] * Ld(i,t);
-        return rr;
-    }
-
-    void Animate(float t)
-	{
-        //arrow.Animate(t);
-	    if(ts.size()!=0)
-        {
-            float tsearch=fmod(t, timestamps[timestamps.size()-1]-timestamps[0])+timestamps[0];
-            vec4 psearch=r(tsearch);
-            vec4 iv=rd(tsearch);
-            cout<<iv.v[0]<<" "<<iv.v[1]<<" "<<iv.v[2]<<" "<<atan2(iv.v[0], iv.v[1])<<endl;
-            arrow.Animate(atan2(iv.v[0], iv.v[1]));
-            //atan2(iv.v[0], iv.v[1]);
-            arrow.Move(psearch);
-            if(camera.getVstate()) camera.setV(psearch.v[0], psearch.v[1]);
-        }
-	}
-
-	void Draw()
-	{
-	    ls.Draw();
-	    arrow.Draw();
-	}
-};
-
-class BezierCurve
+/*class BezierCurve
 {
     LineStrip ls;
 
@@ -717,7 +619,7 @@ public:
 	    ls.Draw();
 	}
 
-	float getZ(int x)
+	float getZ(unsigned int x)
 	{
 	    float z;
 	    if(cps.size()>1)
@@ -737,33 +639,6 @@ public:
         }
         return z;
 	}
-};
-
-/*class BezierCurves
-{
-public:
-    BezierCurve bcs[21];
-
-    BezierCurves(){};
-
-    void Create()
-    {
-
-    }
-
-    BezierCurve operator[](const int& idx)
-    {
-        return bcs[idx];
-    }
-
-    void Draw()
-    {
-
-        for(int i=0;i<21;i++)
-        {
-            bcs[i].Draw();
-        }
-    }
 };*/
 
 class Square{
@@ -783,6 +658,44 @@ class BezierSurface {
       	for(int j = 1; j <= i; j++) choose *= (float)(n-j+1)/j;
       	return choose * pow(t, i) * pow(1-t, n-i);
    }
+
+   float Bd(int i, float t)
+   {
+       int n=21;
+       float choose=1;
+       for(int j = 1; j <= i; j++) choose*=(float)(n-j+1)/j;
+       return choose*(-n*t+i)*pow(t, i-1)*pow(1-t, n-1-i);
+   }
+
+   /*float Bdu(float u, float v)
+   {
+       float x=-3*(1-u)*(1-u);
+       for(int i=0;i<21;i++) x=x+r(0, i)*B(i, v);
+       x*=3*(1-u)*(1-u);
+       float y=-6*u*(1-u);
+       for(int i=0;i<21;i++) y+=B(i, v)*r(0, i);
+       y*=6*u*(1-u);
+       float z=-3*u*u;
+       for(int i=0;i<21;i++) z+=B(i, v)*r(1, i);
+       z*=3*u*u;
+       for(int i=0;i<21;i++) z+=B(i, v)*r(3, i);
+       return x-y-z;
+   }
+
+   float Bdv(float u, float v)
+   {
+       float x=-3*(1-v)*(1-v);
+       for(int i=0;i<21;i++) x+=B(i, u)*r(i, 0);
+       x*=3*(1-v)*(1-v);
+       float y=-6*v*(1-v);
+       for(int i=0;i<21;i++) y+=B(i, u)*r(i, 1);
+       y*=6*v*(1-v);
+       float z=-3*v*v;
+       for(int i=0;i<21;i++) z+=B(i, u)*r(i, 2);
+       z*=3*v*v;
+       for(int i=0;i<21;i++) z+=B(i, u)*r(i, 3);
+       return x-y-z;
+   }*/
 public:
 	BezierSurface() {
 	}
@@ -809,7 +722,23 @@ public:
     {
         vec4 rr(0, 0);
         for(unsigned int i=0;i<21;i++)
-            for(unsigned int j=0;j<21;j++) rr = rr + cps[i][j] *B(i,u) *B(j,v);
+            for(unsigned int j=0;j<21;j++) rr = rr + cps[i][j] *B(i, u) *B(j, v);
+        return rr;
+    }
+
+    vec4 ru(float u, float v)
+    {
+        vec4 rr(0, 0);
+        for(unsigned int i=0;i<21;i++)
+            for(unsigned int j=0;j<21;j++) rr = rr + cps[i][j] *Bd(i, u) *B(j, v);
+        return rr;
+    }
+
+    vec4 rv(float u, float v)
+    {
+        vec4 rr(0, 0);
+        for(unsigned int i=0;i<21;i++)
+            for(unsigned int j=0;j<21;j++) rr = rr + cps[i][j] *B(i, u) *Bd(j, v);
         return rr;
     }
 
@@ -865,15 +794,22 @@ public:
 
 	vec4 makeColor(float z)
 	{
-	    if(z<0.45) return vec4(nRGB(83),nRGB(178), 0);
+	    /*if(z<0.45) return vec4(nRGB(83),nRGB(178), 0);
 	    //if(z<0.5) return vec4(nRGB(169),nRGB(148), 0);
 	    if(z<0.55) return vec4(nRGB(255), nRGB(119), 0);
-	    return vec4(nRGB(104), nRGB(48), 0);
+	    return vec4(nRGB(104), nRGB(48), 0);*/
+	    //return vec4(nRGB(83+z*(104-83)),nRGB(178-z*(178-48)), 0);
+	    return vec4(nRGB(83+z/0.6*(124-83)),nRGB(178-z/0.7*(178-48)), 0);
 	}
 
 	float nRGB(int a)
 	{
 	    return (float)a/(float)255;
+	}
+
+	void calcGrad(float i, float j)
+	{
+
 	}
 
 	void Draw() {
@@ -887,18 +823,158 @@ public:
 };
 
 // The virtual world: collection of two objects
-Triangle triangle;
-LagrangeCurve lineStrip;
+//Triangle triangle;
 BezierSurface bezierSurface;
+
+class LagrangeCurve
+{
+    vector<vec4>  cps;	// control points
+    vector<float> ts; 	// parameter (knot) values
+    vector<float> timestamps;
+    LineStrip ls;
+    Arrow arrow;
+    bool moved=false;
+
+
+    float L(unsigned int i, float t)
+    {
+        float Li = 1.0f;
+        for(unsigned int j = 0; j < cps.size(); j++)
+            if (j != i) Li *= (t - ts[j])/(ts[i]- ts[j]);
+        return Li;
+    }
+
+    float Ld(unsigned int i, float t)
+    {
+        float Li = 1.0f;
+        for(unsigned int j = 0; j < cps.size(); j++)
+            if (j != i) Li += 1/(t - ts[j]);
+        return L(i, t)* Li;
+    }
+
+public:
+    bool pressed=false;
+
+    LagrangeCurve() {
+	}
+
+	void Create() {
+		ls.Create();
+		arrow.Create();
+	}
+
+    void AddPoint(float cX, float cY, float time)
+    {
+        vec4 cp = vec4(cX, cY, 0, 1) * camera.Pinv() * camera.Vinv();
+
+        ls.clear();
+        //float ti = cps.size();
+
+        cps.push_back(cp);
+        //ts.push_back(ti);
+        ts.push_back(time/1000);
+        timestamps.push_back(time/1000);
+
+        if(cps.size()>1)
+        {
+            for(unsigned int i=0;i<cps.size();i++)
+            {
+                float t1=ts[i];
+                float t2=ts[i+1];
+                for(float t=t1;t<=t2;t+=(t2-t1)/30)
+                {
+                    vec4 pos=r(t);
+                    (pos=pos*camera.V() * camera.P());
+                    ls.AddPoint(pos.v[0], pos.v[1]);
+                }
+            }
+        }
+    }
+
+    vec4 r(float t)
+    {
+        vec4 rr(0, 0, 0);
+        for(unsigned int i = 0; i < cps.size(); i++) rr = rr+ cps[i] * L(i,t);
+        return rr;
+    }
+
+    vec4 rd(float t)
+    {
+        vec4 rr(0, 0, 0);
+        for(unsigned int i = 0; i < cps.size(); i++) rr = rr+ cps[i] * Ld(i,t);
+        return rr;
+    }
+
+    vec4 getP(float t)
+    {
+        if((ts[0]+t)>ts[ts.size()-1])
+            stop();
+        return r(ts[0]+t);
+    }
+
+    void Animate(float t)
+	{
+        if(ts.size()!=0&&pressed==true)
+        {
+            float tsearch=fmod(t, timestamps[timestamps.size()-1]-timestamps[0])+timestamps[0];
+            vec4 psearch=r(tsearch);
+            vec4 iv=rd(tsearch);
+            arrow.Animate(atan2(iv.v[0], iv.v[1]));
+            arrow.Move(psearch);
+            //moveCyclist(t);
+
+            cout<<bezierSurface.ru(psearch.v[0], psearch.v[1]).v[2];
+            cout<<" "<<bezierSurface.rv(psearch.v[0], psearch.v[1]).v[2]<<endl;
+        }
+	}
+
+	void moveCyclist(float t)
+	{
+	    float tsearch;
+	    //cout<<(pressed?"pressed":"")<<" "<<(moved?"moved":"")<<endl;
+        if(pressed==true&&moved==false)
+        {
+            tsearch=fmod(t, timestamps[timestamps.size()-1]-timestamps[0]+0.05)+timestamps[0];
+            if(!moved&&tsearch>(timestamps[timestamps.size()-1])) moved=true;
+            cout<<tsearch<<endl;
+            vec4 psearch=r(tsearch);
+            vec4 iv=rd(tsearch);
+            //cout<<iv.v[0]<<" "<<iv.v[1]<<" "<<iv.v[2]<<" "<<atan2(iv.v[0], iv.v[1])<<endl;
+            if(!moved) arrow.Animate(atan2(iv.v[0], iv.v[1]));
+            if(!moved) arrow.Move(psearch);
+        }
+        /*for(int i=0;i<ts.size();i++)
+        {
+            float t1=ts[i];
+            float t2=ts[i+1];
+            for(float t=t1;t<=t2;t+=(t2-t1)/30)
+            {
+                vec4 psearch=r(t);
+                vec4 iv=rd(t);
+                arrow.Animate(atan2(iv.v[0], iv.v[1]));
+                arrow.Move(psearch);
+            }
+        }*/
+	}
+
+	void Draw()
+	{
+	    ls.Draw();
+	    arrow.Draw();
+	}
+};
+
+LagrangeCurve lineStrip;
 
 // Initialization, create an OpenGL context
 void onInitialization() {
 	glViewport(0, 0, windowWidth, windowHeight);
 	srand(10000);
+LagrangeCurve lineStrip;
 
 	// Create objects by setting up their vertex data on the GPU
 	lineStrip.Create();
-	triangle.Create();
+	//triangle.Create();
 	bezierSurface.Create();
 
 
@@ -951,7 +1027,7 @@ void onDisplay() {
 	glClearColor(0, 0, 0, 0);							// background color
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the screen
 
-	triangle.Draw();
+	//triangle.Draw();
 	bezierSurface.Draw();
 	lineStrip.Draw();
 
@@ -962,6 +1038,11 @@ void onDisplay() {
 // Key of ASCII code pressed
 void onKeyboard(unsigned char key, int pX, int pY) {
 	if (key == 'd') glutPostRedisplay();         // if d, invalidate display, i.e. redraw
+	if (key == ' ')
+    {
+        lineStrip.pressed=true;
+        lineStrip.start(glutGet(GLUT_ELAPSED_TIME));
+    }
 }
 
 // Key of ASCII code released
@@ -988,7 +1069,7 @@ void onIdle() {
 	long time = glutGet(GLUT_ELAPSED_TIME); // elapsed time since the start of the program
 	float sec = time / 1000.0f;				// convert msec to sec
 	camera.Animate(sec);					// animate the camera
-	triangle.Animate(sec);					// animate the triangle object
+	//triangle.Animate(sec);					// animate the triangle object
 	lineStrip.Animate(sec);
 	glutPostRedisplay();					// redraw the scene
 }
