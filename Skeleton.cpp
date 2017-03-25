@@ -937,7 +937,7 @@ public:
             vec4 pos=getP(tsearch);
             arrow.Move(pos);
             vec4 iv=rd(ts[0]+tsearch);
-            arrow.Animate((atan2(iv.v[0], iv.v[1])));
+            arrow.Animate((atan2f(iv.v[0], iv.v[1])));
 
             cout<<bezierSurface.ru(pos.v[0], pos.v[1]).v[2];
             cout<<" "<<bezierSurface.rv(pos.v[0], pos.v[1]).v[2]<<endl;
