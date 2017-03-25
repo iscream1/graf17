@@ -460,13 +460,13 @@ public:
 	}
 
 	void Animate(float t) {
-		sx=sy=cosf(2.0f*t)/3.0f+0.75f;
+		//sx=sy=cosf(2.0f*t)/3.0f+0.75f;
 		fi=t;
 	}
 
 	void Draw() {
-		mat4 M(sx, 0, 0, 0,
-			0, sy, 0, 0,
+		mat4 M(1, 0, 0, 0,
+			0, 1, 0, 0,
 			0, 0, 1, 0,
 			position.v[0], position.v[1], 0, 1); // model matrix
 
@@ -571,6 +571,15 @@ class LagrangeCurve
             if (j != i) Li *= (t - ts[j])/(ts[i]- ts[j]);
         return Li;
     }
+
+    float Ld(unsigned int i, float t)
+    {
+        float Li = 1.0f;
+        for(unsigned int j = 0; j < cps.size(); j++)
+            if (j != i) Li += 1/(t - ts[j]);
+        return L(i, t)* Li;
+    }
+
 public:
     LagrangeCurve() {
 	}
@@ -615,13 +624,24 @@ public:
         return rr;
     }
 
+    vec4 rd(float t)
+    {
+        vec4 rr(0, 0, 0);
+        for(unsigned int i = 0; i < cps.size(); i++) rr = rr+ cps[i] * Ld(i,t);
+        return rr;
+    }
+
     void Animate(float t)
 	{
-        arrow.Animate(t);
+        //arrow.Animate(t);
 	    if(ts.size()!=0)
         {
             float tsearch=fmod(t, timestamps[timestamps.size()-1]-timestamps[0])+timestamps[0];
             vec4 psearch=r(tsearch);
+            vec4 iv=rd(tsearch);
+            cout<<iv.v[0]<<" "<<iv.v[1]<<" "<<iv.v[2]<<" "<<atan2(iv.v[0], iv.v[1])<<endl;
+            arrow.Animate(atan2(iv.v[0], iv.v[1]));
+            //atan2(iv.v[0], iv.v[1]);
             arrow.Move(psearch);
             if(camera.getVstate()) camera.setV(psearch.v[0], psearch.v[1]);
         }
@@ -774,7 +794,6 @@ public:
                 AddControlPoint(i, j);
             }
         }
-
 		addSquares();
 	}
 
