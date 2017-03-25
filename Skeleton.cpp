@@ -831,6 +831,7 @@ class LagrangeCurve
     vector<vec4>  cps;	// control points
     vector<float> ts; 	// parameter (knot) values
     vector<float> timestamps;
+    float starttime;
     LineStrip ls;
     Arrow arrow;
     bool moved=false;
@@ -873,7 +874,6 @@ public:
         cps.push_back(cp);
         //ts.push_back(ti);
         ts.push_back(time/1000);
-        timestamps.push_back(time/1000);
 
         if(cps.size()>1)
         {
@@ -907,56 +907,43 @@ public:
 
     vec4 getP(float t)
     {
-        if((ts[0]+t)>ts[ts.size()-1])
-            stop();
+        if((ts[0]+t)>ts[ts.size()-1]) stop();
         return r(ts[0]+t);
+    }
+
+    void start(float t)
+    {
+        pressed=true;
+        starttime=t/1000;
+    }
+
+    void stop()
+    {
+        moved=true;
     }
 
     void Animate(float t)
 	{
-        if(ts.size()!=0&&pressed==true)
+        if(ts.size()!=0&&pressed&&!moved)
         {
-            float tsearch=fmod(t, timestamps[timestamps.size()-1]-timestamps[0])+timestamps[0];
+            float tsearch=t-starttime;
+            vec4 pos=getP(tsearch);
+            cout<<pos.v[0]<<" "<<pos.v[1]<<" "<<pos.v[2]<<endl;
+            arrow.Move(pos);
+            vec4 iv=rd(ts[0]+tsearch);
+            arrow.Animate((atan2(iv.v[0], iv.v[1])));
+
+            /*float tsearch=fmod(t, timestamps[timestamps.size()-1]-timestamps[0])+timestamps[0];
             vec4 psearch=r(tsearch);
             vec4 iv=rd(tsearch);
             arrow.Animate(atan2(iv.v[0], iv.v[1]));
-            arrow.Move(psearch);
+            arrow.Move(psearch);*/
             //moveCyclist(t);
 
-            cout<<bezierSurface.ru(psearch.v[0], psearch.v[1]).v[2];
-            cout<<" "<<bezierSurface.rv(psearch.v[0], psearch.v[1]).v[2]<<endl;
+            /*cout<<bezierSurface.ru(psearch.v[0], psearch.v[1]).v[2];
+            cout<<" "<<bezierSurface.rv(psearch.v[0], psearch.v[1]).v[2]<<endl;*/
         }
 	}
-
-	void moveCyclist(float t)
-	{
-	    float tsearch;
-	    //cout<<(pressed?"pressed":"")<<" "<<(moved?"moved":"")<<endl;
-        if(pressed==true&&moved==false)
-        {
-            tsearch=fmod(t, timestamps[timestamps.size()-1]-timestamps[0]+0.05)+timestamps[0];
-            if(!moved&&tsearch>(timestamps[timestamps.size()-1])) moved=true;
-            cout<<tsearch<<endl;
-            vec4 psearch=r(tsearch);
-            vec4 iv=rd(tsearch);
-            //cout<<iv.v[0]<<" "<<iv.v[1]<<" "<<iv.v[2]<<" "<<atan2(iv.v[0], iv.v[1])<<endl;
-            if(!moved) arrow.Animate(atan2(iv.v[0], iv.v[1]));
-            if(!moved) arrow.Move(psearch);
-        }
-        /*for(int i=0;i<ts.size();i++)
-        {
-            float t1=ts[i];
-            float t2=ts[i+1];
-            for(float t=t1;t<=t2;t+=(t2-t1)/30)
-            {
-                vec4 psearch=r(t);
-                vec4 iv=rd(t);
-                arrow.Animate(atan2(iv.v[0], iv.v[1]));
-                arrow.Move(psearch);
-            }
-        }*/
-	}
-
 	void Draw()
 	{
 	    ls.Draw();
@@ -970,7 +957,6 @@ LagrangeCurve lineStrip;
 void onInitialization() {
 	glViewport(0, 0, windowWidth, windowHeight);
 	srand(10000);
-LagrangeCurve lineStrip;
 
 	// Create objects by setting up their vertex data on the GPU
 	lineStrip.Create();
@@ -1040,7 +1026,6 @@ void onKeyboard(unsigned char key, int pX, int pY) {
 	if (key == 'd') glutPostRedisplay();         // if d, invalidate display, i.e. redraw
 	if (key == ' ')
     {
-        lineStrip.pressed=true;
         lineStrip.start(glutGet(GLUT_ELAPSED_TIME));
     }
 }
