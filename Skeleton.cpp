@@ -869,10 +869,8 @@ public:
         vec4 cp = vec4(cX, cY, 0, 1) * camera.Pinv() * camera.Vinv();
 
         ls.clear();
-        //float ti = cps.size();
 
         cps.push_back(cp);
-        //ts.push_back(ti);
         ts.push_back(time/1000);
 
         if(cps.size()>1)
@@ -919,7 +917,8 @@ public:
 
     void stop()
     {
-        moved=true;
+        pressed=false;
+        moved=false;
     }
 
     void Animate(float t)
@@ -928,17 +927,9 @@ public:
         {
             float tsearch=t-starttime;
             vec4 pos=getP(tsearch);
-            cout<<pos.v[0]<<" "<<pos.v[1]<<" "<<pos.v[2]<<endl;
             arrow.Move(pos);
             vec4 iv=rd(ts[0]+tsearch);
             arrow.Animate((atan2(iv.v[0], iv.v[1])));
-
-            /*float tsearch=fmod(t, timestamps[timestamps.size()-1]-timestamps[0])+timestamps[0];
-            vec4 psearch=r(tsearch);
-            vec4 iv=rd(tsearch);
-            arrow.Animate(atan2(iv.v[0], iv.v[1]));
-            arrow.Move(psearch);*/
-            //moveCyclist(t);
 
             /*cout<<bezierSurface.ru(psearch.v[0], psearch.v[1]).v[2];
             cout<<" "<<bezierSurface.rv(psearch.v[0], psearch.v[1]).v[2]<<endl;*/
@@ -947,7 +938,7 @@ public:
 	void Draw()
 	{
 	    ls.Draw();
-	    arrow.Draw();
+	    if(pressed&&!moved) arrow.Draw();
 	}
 };
 
@@ -956,7 +947,7 @@ LagrangeCurve lineStrip;
 // Initialization, create an OpenGL context
 void onInitialization() {
 	glViewport(0, 0, windowWidth, windowHeight);
-	srand(10000);
+	srand(100);
 
 	// Create objects by setting up their vertex data on the GPU
 	lineStrip.Create();
