@@ -659,12 +659,20 @@ class BezierSurface {
       	return choose * pow(t, i) * pow(1-t, n-i);
    }
 
-   float Bd(int i, float t)
+   float Bdu(int i, float u)
    {
        int n=21;
        float choose=1;
        for(int j = 1; j <= i; j++) choose*=(float)(n-j+1)/j;
-       return choose*(-n*t+i)*pow(t, i-1)*pow(1-t, n-1-i);
+       return choose*(i*pow(u, i-1)*pow(1-u, n-i)-pow(u, i)*(n-i)*pow(1-u, n-i-1));
+   }
+
+   float Bdv(int i, float v)
+   {
+       int n=21;
+       float choose=1;
+       for(int j = 1; j <= i; j++) choose*=(float)(n-j+1)/j;
+       return choose*(i*pow(v, i-1)*pow(1-v, n-i)-pow(v, i)*(n-i)*pow(1-v, n-i-1));
    }
 
    /*float Bdu(float u, float v)
@@ -730,7 +738,7 @@ public:
     {
         vec4 rr(0, 0);
         for(unsigned int i=0;i<21;i++)
-            for(unsigned int j=0;j<21;j++) rr = rr + cps[i][j] *Bd(i, u) *B(j, v);
+            for(unsigned int j=0;j<21;j++) rr = rr + cps[i][j] *Bdu(i, u) *B(j, v);
         return rr;
     }
 
@@ -738,7 +746,7 @@ public:
     {
         vec4 rr(0, 0);
         for(unsigned int i=0;i<21;i++)
-            for(unsigned int j=0;j<21;j++) rr = rr + cps[i][j] *B(i, u) *Bd(j, v);
+            for(unsigned int j=0;j<21;j++) rr = rr + cps[i][j] *B(i, v) *Bdv(j, v);
         return rr;
     }
 
@@ -931,8 +939,8 @@ public:
             vec4 iv=rd(ts[0]+tsearch);
             arrow.Animate((atan2(iv.v[0], iv.v[1])));
 
-            /*cout<<bezierSurface.ru(psearch.v[0], psearch.v[1]).v[2];
-            cout<<" "<<bezierSurface.rv(psearch.v[0], psearch.v[1]).v[2]<<endl;*/
+            cout<<bezierSurface.ru(pos.v[0], pos.v[1]).v[2];
+            cout<<" "<<bezierSurface.rv(pos.v[0], pos.v[1]).v[2]<<endl;
         }
 	}
 	void Draw()
