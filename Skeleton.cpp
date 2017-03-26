@@ -859,6 +859,8 @@ class LagrangeCurve
     Arrow arrow;
     bool moved=false;
     Triangle irdv_Triangle;
+    float sum=0;
+    vec4 prevPos;
 
 
     float L(unsigned int i, float t)
@@ -893,9 +895,10 @@ public:
         vec4 cp = vec4(cX, cY, 0, 1) * camera.Pinv() * camera.Vinv();
 
         ls.clear();
-
         cps.push_back(cp);
         ts.push_back(time/1000);
+        prevPos=cps[0];
+        sum=0;
 
         if(cps.size()>1)
         {
@@ -906,10 +909,13 @@ public:
                 for(float t=t1;t<=t2;t+=(t2-t1)/30)
                 {
                     vec4 pos=r(t);
+                    sum=sum+sqrtf((pos-prevPos).v[0]*(pos-prevPos).v[0]+(pos-prevPos).v[1]*(pos-prevPos).v[1]);
+                    prevPos=pos;
                     (pos=pos*camera.V() * camera.P());
                     ls.AddPoint(pos.v[0], pos.v[1]);
                 }
             }
+            printf("%f m\n", sum*50);
         }
     }
 
@@ -959,9 +965,6 @@ public:
             vec4 grad=vec4(bezierSurface.ru(pos.v[0], pos.v[1]).v[2], bezierSurface.rv(pos.v[0], pos.v[1]).v[2]);
             iv.normalize();
             float irdv=iv.v[0]*grad.v[0]+iv.v[1]*grad.v[1];
-
-            //cout<<grad.v[0]<<" "<<grad.v[1]<<endl;
-            cout<<irdv<<endl;
 
             if(irdv>0)
             {
