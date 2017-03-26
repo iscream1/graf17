@@ -753,7 +753,7 @@ public:
             {
                 float t1=ts[i];
                 float t2=ts[i+1];
-                for(float t=t1;t<=t2;t+=(t2-t1)/30)
+                for(float t=t1;t<=t2;t+=(t2-t1)/20)
                 {
                     vec4 pos=r(t);
                     sum=sum+sqrtf((pos-prevPos).v[0]*(pos-prevPos).v[0]+(pos-prevPos).v[1]*(pos-prevPos).v[1]);
@@ -804,7 +804,6 @@ public:
         {
             float tsearch=t-starttime;
             vec4 pos=getP(tsearch);
-            //arrow.Move(pos);
             vec4 iv=rd(ts[0]+tsearch);
             arrow.Animate((atan2f(iv.v[0], iv.v[1])), pos);
 
