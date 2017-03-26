@@ -212,6 +212,21 @@ struct vec4 {
 		}
 		return result;
 	}
+
+	vec4& normalize()
+	{
+	    return *this=*this * (1/sqrtf(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]));
+	}
+
+	float length()
+	{
+	    return sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+	}
+
+	float dot(const vec4 &vx)
+	{
+	    return v[0]*vx.v[0]+v[1]*vx.v[1]+v[2]*vx.v[2];
+	}
 };
 
 // 2D camera
@@ -663,16 +678,16 @@ class BezierSurface {
    {
        int n=21;
        float choose=1;
-       for(int j = 1; j <= i; j++) choose*=(float)(n-j+1)/j;
-       return choose*(i*pow(u, i-1)*pow(1-u, n-i)-pow(u, i)*(n-i)*pow(1-u, n-i-1));
+       for(int j = 1; j <= i; j++) choose*=(float)(n-j+1)/(float)j;
+       return choose*((float)i*pow(u, (float)i-1)*pow(1-u, (float)n-i)-pow(u, (float)i)*(float)(n-i)*pow(1-u, (float)n-i-1));
    }
 
    float Bdv(int i, float v)
    {
        int n=21;
        float choose=1;
-       for(int j = 1; j <= i; j++) choose*=(float)(n-j+1)/j;
-       return choose*(i*pow(v, i-1)*pow(1-v, n-i)-pow(v, i)*(n-i)*pow(1-v, n-i-1));
+       for(int j = 1; j <= i; j++) choose*=(float)(n-j+1)/(float)j;
+       return choose*((float)i*pow(v, (float)i-1)*pow(1-v, (float)n-i)-pow(v, (float)i)*(float)(n-i)*pow(1-v, (float)n-i-1));
    }
 
    /*float Bdu(float u, float v)
@@ -843,6 +858,7 @@ class LagrangeCurve
     LineStrip ls;
     Arrow arrow;
     bool moved=false;
+    Triangle irdv_Triangle;
 
 
     float L(unsigned int i, float t)
@@ -939,13 +955,42 @@ public:
             vec4 iv=rd(ts[0]+tsearch);
             arrow.Animate((atan2f(iv.v[0], iv.v[1])));
 
-            cout<<bezierSurface.ru(pos.v[0], pos.v[1]).v[2];
-            cout<<" "<<bezierSurface.rv(pos.v[0], pos.v[1]).v[2]<<endl;
+            pos=pos*0.01;
+            vec4 grad=vec4(bezierSurface.ru(pos.v[0], pos.v[1]).v[2], bezierSurface.rv(pos.v[0], pos.v[1]).v[2]);
+            iv.normalize();
+            float irdv=iv.v[0]*grad.v[0]+iv.v[1]*grad.v[1];
+
+            //cout<<grad.v[0]<<" "<<grad.v[1]<<endl;
+            cout<<irdv<<endl;
+
+            if(irdv>0)
+            {
+                if(irdv>1)
+                {
+                    irdv_Triangle.Create(vec4(9.5, 7, 0), vec4(9.5, 6, 0), vec4(9.5-1/irdv, 6, 0), vec4(1,1,1), vec4(1,1,1), vec4(1,1,1));
+                }
+                else
+                {
+                    irdv_Triangle.Create(vec4(9.5, 6+irdv, 0), vec4(9.5, 6, 0), vec4(8.5, 6, 0), vec4(1,1,1), vec4(1,1,1), vec4(1,1,1));
+                }
+            }
+            else
+            {
+                if(irdv<(-1))
+                {
+                    irdv_Triangle.Create(vec4(8.5, 7, 0), vec4(8.5+(1/(-1*irdv)), 6, 0), vec4(8.5, 6, 0), vec4(1,1,1), vec4(1,1,1), vec4(1,1,1));
+                }
+                else
+                {
+                    irdv_Triangle.Create(vec4(8.5, 6+(-1*irdv), 0), vec4(9.5, 6, 0), vec4(8.5, 6, 0), vec4(1,1,1), vec4(1,1,1), vec4(1,1,1));
+                }
+            }
         }
 	}
 	void Draw()
 	{
 	    ls.Draw();
+	    if(pressed&&!moved) irdv_Triangle.Draw();
 	    if(pressed&&!moved) arrow.Draw();
 	}
 };
