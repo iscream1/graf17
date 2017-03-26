@@ -720,7 +720,7 @@ class LagrangeCurve
 
     float Ld(unsigned int i, float t)
     {
-        float Li = 1.0f;
+        float Li = 0.0f;
         for(unsigned int j = 0; j < cps.size(); j++)
             if (j != i) Li += 1/(t - ts[j]);
         return L(i, t)* Li;
@@ -804,11 +804,11 @@ public:
         {
             float tsearch=t-starttime;
 
-            vec4 iv=rd(fmod(t, ts[ts.size()-1]-ts[0])+ts[0]);
+            //vec4 iv=rd(fmod(t, ts[ts.size()-1]-ts[0])+ts[0]);
 
             vec4 pos=getP(tsearch);
-            //vec4 iv=rd(ts[0]+tsearch);
-            arrow.Animate(-(atan2f(iv.v[0], iv.v[1])), pos);
+            vec4 iv=rd(ts[0]+tsearch);
+            arrow.Animate((atan2f(iv.v[0], iv.v[1])), pos);
 
             pos=pos*0.01;
             vec4 grad=vec4(bezierSurface.ru(pos.v[0], pos.v[1]).v[2], bezierSurface.rv(pos.v[0], pos.v[1]).v[2]);
@@ -853,7 +853,7 @@ LagrangeCurve lineStrip;
 // Initialization, create an OpenGL context
 void onInitialization() {
 	glViewport(0, 0, windowWidth, windowHeight);
-	srand(100);
+	srand(1000);
 
 	// Create objects by setting up their vertex data on the GPU
 	lineStrip.Create();
@@ -908,8 +908,6 @@ void onExit() {
 void onDisplay() {
 	glClearColor(0, 0, 0, 0);							// background color
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the screen
-
-	//triangle.Draw();
 	bezierSurface.Draw();
 	lineStrip.Draw();
 
@@ -950,7 +948,6 @@ void onIdle() {
 	long time = glutGet(GLUT_ELAPSED_TIME); // elapsed time since the start of the program
 	float sec = time / 1000.0f;				// convert msec to sec
 	camera.Animate(sec);					// animate the camera
-	//triangle.Animate(sec);					// animate the triangle object
 	lineStrip.Animate(sec);
 	glutPostRedisplay();					// redraw the scene
 }
