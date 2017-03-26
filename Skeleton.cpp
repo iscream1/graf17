@@ -18,8 +18,8 @@
 //
 // NYILATKOZAT
 // ---------------------------------------------------------------------------------------------
-// Nev    :
-// Neptun :
+// Nev    : Csibi Martin
+// Neptun : V5LSRD
 // ---------------------------------------------------------------------------------------------
 // ezennel kijelentem, hogy a feladatot magam keszitettem, es ha barmilyen segitseget igenybe vettem vagy
 // mas szellemi termeket felhasznaltam, akkor a forrast es az atvett reszt kommentekben egyertelmuen jeloltem.
@@ -52,8 +52,6 @@
 #endif
 
 #include <iostream>
-using std::cout;
-using std::endl;
 
 using std::vector;
 
@@ -771,45 +769,22 @@ public:
         {
             for(int j=0;j<20;j++) //egy oszlopban 20 negyzet
             {
-                /*float xa=r((float)i     /21, (float)j       /21).v[0]; //bal lenn
-                float xb=r((float)(i+1) /21, (float)j       /21).v[0]; //jobb lenn
-                float xc=r((float)(i+1) /21, (float)(j+1)   /21).v[0]; //jobb fenn
-                float xd=r((float)i     /21, (float)(j+1)   /21).v[0]; //bal fenn
-
-                float ya=r((float)i     /21, (float)j       /21).v[1]; //bal lenn
-                float yb=r((float)(i+1) /21, (float)j       /21).v[1]; //jobb lenn
-                float yc=r((float)(i+1) /21, (float)(j+1)   /21).v[1]; //jobb fenn
-                float yd=r((float)i     /21, (float)(j+1)   /21).v[1]; //bal fenn
-
-                cout<<xa<<" "<<xb<<" "<<xc<<" "<<xd<<endl;
-                cout<<ya<<" "<<yb<<" "<<yc<<" "<<yd<<endl<<endl;*/
-
-                //magassagok
                 float za=r((float)i     /21, (float)j       /21).v[2]; //bal lenn
                 float zb=r((float)(i+1) /21, (float)j       /21).v[2]; //jobb lenn
                 float zc=r((float)(i+1) /21, (float)(j+1)   /21).v[2]; //jobb fenn
                 float zd=r((float)i     /21, (float)(j+1)   /21).v[2]; //bal fenn
 
-                //4db 2D vec4 -10;10 tartomanyban!!! , egy negyzet 4 sarka, sorrend ugyanaz mint feljebb
                 vec4 a=vec4(-10+i, -10+j, 0);
                 vec4 b=vec4(-10+i+1, -10+j, 0);
                 vec4 c=vec4(-10+i+1, -10+j+1, 0);
                 vec4 d=vec4(-10+i, -10+j+1, 0);
-
-                /*//csucsok szinei
-                vec4 colorA=vec4(float(144/255), za, 1);
-                vec4 colorB=vec4(float(144/255), zb, 1);
-                vec4 colorC=vec4(float(144/255), zc, 1);
-                vec4 colorD=vec4(float(144/255), zd, 1);*/
 
                 vec4 colorA=makeColor(za);
                 vec4 colorB=makeColor(zb);
                 vec4 colorC=makeColor(zc);
                 vec4 colorD=makeColor(zd);
 
-                //elso haromszog a negyzetben
                 squares[i][j].t[0].Create(a, b, c, colorA, colorB, colorC);
-                //masodik haromszog a negyzetben
                 squares[i][j].t[1].Create(a, c, d, colorA, colorC, colorD);
             }
         }
@@ -817,11 +792,6 @@ public:
 
 	vec4 makeColor(float z)
 	{
-	    /*if(z<0.45) return vec4(nRGB(83),nRGB(178), 0);
-	    //if(z<0.5) return vec4(nRGB(169),nRGB(148), 0);
-	    if(z<0.55) return vec4(nRGB(255), nRGB(119), 0);
-	    return vec4(nRGB(104), nRGB(48), 0);*/
-	    //return vec4(nRGB(83+z*(104-83)),nRGB(178-z*(178-48)), 0);
 	    return vec4(nRGB(83+z/0.6*(124-83)),nRGB(178-z/0.7*(178-48)), 0);
 	}
 
@@ -1007,7 +977,6 @@ void onInitialization() {
 
 	// Create objects by setting up their vertex data on the GPU
 	lineStrip.Create();
-	//triangle.Create();
 	bezierSurface.Create();
 
 
