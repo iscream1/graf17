@@ -803,9 +803,12 @@ public:
         if(ts.size()!=0&&pressed&&!moved)
         {
             float tsearch=t-starttime;
+
+            vec4 iv=rd(fmod(t, ts[ts.size()-1]-ts[0])+ts[0]);
+
             vec4 pos=getP(tsearch);
-            vec4 iv=rd(ts[0]+tsearch);
-            arrow.Animate((atan2f(iv.v[0], iv.v[1])), pos);
+            //vec4 iv=rd(ts[0]+tsearch);
+            arrow.Animate(-(atan2f(iv.v[0], iv.v[1])), pos);
 
             pos=pos*0.01;
             vec4 grad=vec4(bezierSurface.ru(pos.v[0], pos.v[1]).v[2], bezierSurface.rv(pos.v[0], pos.v[1]).v[2]);
