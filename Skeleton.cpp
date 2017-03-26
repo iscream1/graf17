@@ -567,93 +567,6 @@ public:
     }
 };
 
-
-
-/*class BezierCurve
-{
-    LineStrip ls;
-
-    float B(int i, float t) {
-        int n = cps.size()-1; // n deg polynomial = n+1 pts!
-        float choose = 1;
-      	for(int j = 1; j <= i; j++) choose *= (float)(n-j+1)/j;
-      	return choose * pow(t, i) * pow(1-t, n-i);
-   }
-
-public:
-    vector<vec4>  cps;	// control points
-    vector<float> ts;
-
-    BezierCurve() {
-	}
-
-	void Create(int x) {
-	    ls.Create();
-
-	}
-
-    void AddControlPoint(float cX, float cY)
-    {
-        float cZ=((float)(rand()%1000))/1000;
-        vec4 cp = vec4(cX, cY, cZ, 1) * camera.Pinv() * camera.Vinv();
-
-        ls.clear();
-        float ti = (float)cps.size()/20.0f;
-
-        cps.push_back(cp);
-        ts.push_back(ti);
-
-    }
-
-    vec4 r(float t)
-    {
-        vec4 rr(0, 0);
-        for(unsigned int i = 0; i < cps.size(); i++) rr = rr+ cps[i] * B(i,t);
-        return rr;
-    }
-
-	void Draw()
-	{
-	    if(cps.size()>1)
-        {
-            for(unsigned int i=0;i<cps.size();i++)
-            {
-                float t1=ts[i];
-                float t2=ts[i+1];
-                for(float t=t1;t<=t2;t+=(t2-t1)/20)
-                {
-                    vec4 pos=r(t);
-                    (pos=pos*camera.V() * camera.P());
-
-                    ls.AddPoint(pos.v[0], pos.v[1]);
-                }
-            }
-        }
-	    ls.Draw();
-	}
-
-	float getZ(unsigned int x)
-	{
-	    float z;
-	    if(cps.size()>1)
-        {
-            for(unsigned int i=0;i<x+1;i++)
-            {
-                float t1=ts[i];
-                float t2=ts[i+1];
-                for(float t=t1;t<=t2;t+=(t2-t1)/20)
-                {
-                    vec4 pos=r(t);
-                    //(pos=pos*camera.V() * camera.P());
-
-                    z=pos.v[2];
-                }
-            }
-        }
-        return z;
-	}
-};*/
-
 class Square{
 public:
     Triangle t[2]; //triangles
@@ -661,7 +574,6 @@ public:
 
 
 class BezierSurface {
-	//BezierCurves bezierCurves;
 	vec4 cps[21][21];
 	Square squares[20][20];
 
@@ -687,36 +599,6 @@ class BezierSurface {
        for(int j = 1; j <= i; j++) choose*=(float)(n-j+1)/(float)j;
        return choose*((float)i*pow(v, (float)i-1)*pow(1-v, (float)n-i)-pow(v, (float)i)*(float)(n-i)*pow(1-v, (float)n-i-1));
    }
-
-   /*float Bdu(float u, float v)
-   {
-       float x=-3*(1-u)*(1-u);
-       for(int i=0;i<21;i++) x=x+r(0, i)*B(i, v);
-       x*=3*(1-u)*(1-u);
-       float y=-6*u*(1-u);
-       for(int i=0;i<21;i++) y+=B(i, v)*r(0, i);
-       y*=6*u*(1-u);
-       float z=-3*u*u;
-       for(int i=0;i<21;i++) z+=B(i, v)*r(1, i);
-       z*=3*u*u;
-       for(int i=0;i<21;i++) z+=B(i, v)*r(3, i);
-       return x-y-z;
-   }
-
-   float Bdv(float u, float v)
-   {
-       float x=-3*(1-v)*(1-v);
-       for(int i=0;i<21;i++) x+=B(i, u)*r(i, 0);
-       x*=3*(1-v)*(1-v);
-       float y=-6*v*(1-v);
-       for(int i=0;i<21;i++) y+=B(i, u)*r(i, 1);
-       y*=6*v*(1-v);
-       float z=-3*v*v;
-       for(int i=0;i<21;i++) z+=B(i, u)*r(i, 2);
-       z*=3*v*v;
-       for(int i=0;i<21;i++) z+=B(i, u)*r(i, 3);
-       return x-y-z;
-   }*/
 public:
 	BezierSurface() {
 	}
@@ -872,7 +754,7 @@ public:
 
         if(cps.size()>1)
         {
-            for(unsigned int i=0;i<cps.size();i++)
+            for(unsigned int i=0;i<cps.size()-1;i++)
             {
                 float t1=ts[i];
                 float t2=ts[i+1];
@@ -885,7 +767,7 @@ public:
                     ls.AddPoint(pos.v[0], pos.v[1]);
                 }
             }
-            printf("%f m\n", sum*50);
+            printf("%f m\n", sum*50); //50m
         }
     }
 
@@ -936,6 +818,7 @@ public:
             iv.normalize();
             float irdv=iv.v[0]*grad.v[0]+iv.v[1]*grad.v[1];
 
+            irdv_Triangle=Triangle();
             if(irdv>0)
             {
                 if(irdv>1)
