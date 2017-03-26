@@ -469,12 +469,12 @@ protected:
     float colors[15];
 public:
 	Arrow() {
-	    Animate(0);
+	    //Animate(0);
 	}
 
-	void Animate(float t) {
-		//sx=sy=cosf(2.0f*t)/3.0f+0.75f;
+	void Animate(float t, vec4 to) {
 		fi=t;
+		position=to;
 	}
 
 	void Draw() {
@@ -554,11 +554,6 @@ public:
 		glEnableVertexAttribArray(1);  // Vertex position
 		// Data organization of Attribute Array 1
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL); // Attribute Array 1, components/attribute, component type, normalize?, tightly packed
-    }
-
-    void Move(vec4 to)
-    {
-        position=to;
     }
 
     vec4 getPos()
@@ -809,9 +804,9 @@ public:
         {
             float tsearch=t-starttime;
             vec4 pos=getP(tsearch);
-            arrow.Move(pos);
+            //arrow.Move(pos);
             vec4 iv=rd(ts[0]+tsearch);
-            arrow.Animate((atan2f(iv.v[0], iv.v[1])));
+            arrow.Animate((atan2f(iv.v[0], iv.v[1])), pos);
 
             pos=pos*0.01;
             vec4 grad=vec4(bezierSurface.ru(pos.v[0], pos.v[1]).v[2], bezierSurface.rv(pos.v[0], pos.v[1]).v[2]);
